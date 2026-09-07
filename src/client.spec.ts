@@ -1,15 +1,28 @@
 import { DGEGClient } from './client';
-import { BRANDS_URL, DISTRICTS_URL, FUELS_URL, MUNICIPALITIES_URL } from './client.constant';
+import {
+  BRANDS_URL,
+  DISTRICTS_URL,
+  FUELS_URL,
+  MUNICIPALITIES_URL,
+  STATION_PARAM_PAGE_SIZE,
+  STATIONS_URL,
+} from './client.constant';
 import {
   brandsFixture,
+  dgegBrandAFixture,
   dgegBrandsFixture,
   dgegDistrictsFixture,
+  dgegFuelGasFixture,
+  dgegFuelPetrolFixture,
   dgegFuelsFixture,
   dgegMunicipalitiesFixture,
   dgegMunicipalityLisboaFixture,
+  dgegMunicipalitySintraFixture,
+  dgegStationFuelsFixture,
   districtsFixture,
   fuelsFixture,
   municipalitiesFixture,
+  stationsFixture,
 } from './client.fixture';
 
 function mockFetchSuccessWithResult<T>(result: T) {
@@ -122,11 +135,14 @@ describe('DGEGClient', () => {
   });
 
   describe('getMunicipalities', () => {
-    it('should return an array of municipalities if HTTP request succeeds and "resultado" is provided (without districtId param)', async () => {
+    it('should return an array of municipalities if HTTP request succeeds and "resultado" is provided (without query params)', async () => {
+      // Assemble
       mockFetchSuccessWithResult(dgegMunicipalitiesFixture);
 
+      // Act
       const municipalities = await client.getMunicipalities();
 
+      // Assert
       expect(fetch).toHaveBeenCalledWith(
         MUNICIPALITIES_URL,
         expect.objectContaining({ headers: expect.any(Object) }),
@@ -134,32 +150,42 @@ describe('DGEGClient', () => {
       expect(municipalities).toEqual(municipalitiesFixture);
     });
 
-    it('should return an array of municipalities if HTTP request succeeds and "resultado" is provided (with districtId param)', async () => {
+    it('should return an array of municipalities if HTTP request succeeds and "resultado" is provided (with query params)', async () => {
+      // Assemble
       const districtId = dgegMunicipalityLisboaFixture.Id;
+      const expectedUrl = `${MUNICIPALITIES_URL}?idDistrito=${districtId}`;
       mockFetchSuccessWithResult(dgegMunicipalitiesFixture);
 
+      // Act
       const municipalities = await client.getMunicipalities(districtId);
 
+      // Assert
       expect(fetch).toHaveBeenCalledWith(
-        `${MUNICIPALITIES_URL}?idDistrito=${districtId}`,
+        expectedUrl,
         expect.objectContaining({ headers: expect.any(Object) }),
       );
       expect(municipalities).toEqual(municipalitiesFixture);
     });
 
     it('should return an empty array if HTTP request succeeds but "resultado" is not provided', async () => {
+      // Assemble
       mockFetchSuccessWithResult(undefined);
 
+      // Act
       const municipalities = await client.getMunicipalities();
 
+      // Assert
       expect(municipalities).toEqual([]);
     });
 
     it('should return an empty array if HTTP request fails', async () => {
+      // Assemble
       mockFetchFailure();
 
+      // Act
       const municipalities = await client.getMunicipalities();
 
+      // Assert
       expect(municipalities).toEqual([]);
       expect(console.error).toHaveBeenCalledWith(
         'Failed to fetch municipalities (HTTP error 500)',
@@ -260,6 +286,74 @@ describe('DGEGClient', () => {
       );
       expect(fuels).toEqual([]);
       expect(console.error).toHaveBeenCalledWith('Failed to fetch fuels (HTTP error 500)');
+    });
+  });
+
+  describe('getStations', () => {
+    it('should return an array of stations if HTTP request succeeds and "resultado" is provided (without query params)', async () => {
+      // Assemble
+      const expectedUrl = `${STATIONS_URL}?qtdPorPagina=${STATION_PARAM_PAGE_SIZE}`;
+      mockFetchSuccessWithResult(dgegStationFuelsFixture);
+
+      // Act
+      const stations = await client.getStations();
+
+      // Assert
+      expect(fetch).toHaveBeenCalledWith(
+        expectedUrl,
+        expect.objectContaining({ headers: expect.any(Object) }),
+      );
+      expect(stations).toEqual(stationsFixture);
+    });
+
+    it('should return an array of stations if HTTP request succeeds and "resultado" is provided (with query params)', async () => {
+      // Assemble
+      const districtId = dgegMunicipalityLisboaFixture.Id;
+      const municipalityIds = [dgegMunicipalityLisboaFixture.Id, dgegMunicipalitySintraFixture.Id];
+      const brandId = dgegBrandAFixture.Id;
+      const fuelTypeIds = [dgegFuelPetrolFixture.Id, dgegFuelGasFixture.Id];
+      const stationTypeId = 1;
+      const expectedUrl = `${STATIONS_URL}?idDistrito=${districtId}&idsMunicipios=${municipalityIds.join('%2C')}&idMarca=${brandId}&idsTiposComb=${fuelTypeIds.join('%2C')}&idTipoPosto=${stationTypeId}&qtdPorPagina=${STATION_PARAM_PAGE_SIZE}`;
+      mockFetchSuccessWithResult(dgegStationFuelsFixture);
+
+      // Act
+      const stations = await client.getStations({
+        districtId,
+        municipalityIds,
+        brandId,
+        fuelTypeIds,
+        stationTypeId,
+      });
+
+      // Assert
+      expect(fetch).toHaveBeenCalledWith(
+        expectedUrl,
+        expect.objectContaining({ headers: expect.any(Object) }),
+      );
+      expect(stations).toEqual(stationsFixture);
+    });
+
+    it('should return an empty array if HTTP request succeeds but "resultado" is not provided', async () => {
+      // Assemble
+      mockFetchSuccessWithResult(undefined);
+
+      // Act
+      const stations = await client.getStations();
+
+      // Assert
+      expect(stations).toEqual([]);
+    });
+
+    it('should return an empty array if HTTP request fails', async () => {
+      // Assemble
+      mockFetchFailure();
+
+      // Act
+      const stations = await client.getStations();
+
+      // Assert
+      expect(stations).toEqual([]);
+      expect(console.error).toHaveBeenCalledWith('Failed to fetch stations (HTTP error 500)');
     });
   });
 });

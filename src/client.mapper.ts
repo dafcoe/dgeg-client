@@ -3,10 +3,10 @@ import {
   DGEGBrand,
   DGEGDistrict,
   DGEGFuel,
-  DGEGMunicipality,
+  DGEGMunicipality, type DGEGStationFuel,
   District,
   Fuel,
-  Municipality,
+  Municipality, Station, StationFuel,
 } from './client.type';
 
 export function mapDGEGDistrictToDistrict(dgegDistrict: DGEGDistrict): District {
@@ -53,4 +53,46 @@ export function mapDGEGFuelToFuel(dgegFuel: DGEGFuel): Fuel {
 
 export function mapDGEGFuelsToFuels(dgegFuels: DGEGFuel[]): Fuel[] {
   return dgegFuels.map(mapDGEGFuelToFuel);
+}
+
+export function mapDGEGStationFuelToStationFuel(dgegStationFuel: DGEGStationFuel): StationFuel {
+  return {
+    name: dgegStationFuel.Combustivel,
+    price: dgegStationFuel.Preco,
+    updatedAt: dgegStationFuel.DataAtualizacao,
+  };
+}
+
+export function mapDGEGStationFuelToStationWithoutFuels(dgegStationFuel: DGEGStationFuel): Station {
+  return {
+    id: dgegStationFuel.Id,
+    name: dgegStationFuel.Nome,
+    brand: dgegStationFuel.Marca,
+    district: dgegStationFuel.Distrito,
+    municipality: dgegStationFuel.Municipio,
+    address: dgegStationFuel.Morada,
+    town: dgegStationFuel.Localidade,
+    postalCode: dgegStationFuel.CodPostal,
+    latitude: dgegStationFuel.Latitude,
+    longitude: dgegStationFuel.Longitude,
+    fuels: [],
+  };
+}
+
+export function mapDGEGStationFuelsToStations(dgegStationFuels: DGEGStationFuel[]): Station[] {
+  const stations = new Map<number, Station>();
+
+  dgegStationFuels.forEach((dgegStationFuel) => {
+    const stationFuel = mapDGEGStationFuelToStationFuel(dgegStationFuel);
+    let station = stations.get(dgegStationFuel.Id);
+
+    if (!station) {
+      station = mapDGEGStationFuelToStationWithoutFuels(dgegStationFuel);
+      stations.set(dgegStationFuel.Id, station);
+    }
+
+    station.fuels.push(stationFuel);
+  });
+
+  return Array.from(stations.values());
 }

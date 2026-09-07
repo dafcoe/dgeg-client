@@ -4,9 +4,12 @@ import type {
   DGEGDistrict,
   DGEGFuel,
   DGEGMunicipality,
+  DGEGStationFuel,
   District,
   Fuel,
   Municipality,
+  Station,
+  StationFuel,
 } from './client.type';
 
 // ###############################################################
@@ -161,4 +164,80 @@ export const fuelGasFixture: Fuel = {
 export const fuelsFixture: Fuel[] = [
   fuelPetrolFixture,
   fuelGasFixture,
+];
+
+// ###############################################################
+// Stations
+// ###############################################################
+
+export const dgegStationFuelPetrolFixture: DGEGStationFuel = {
+  Id: 1,
+  Nome: 'Estação A',
+  TipoPosto: 'Outro',
+  Municipio: 'Lisboa',
+  Preco: '2,140 €',
+  Marca: 'Marca A',
+  Combustivel: 'Gasolina',
+  DataAtualizacao: '2026-08-31 15:40',
+  Distrito: 'Lisboa',
+  Morada: 'Parque das Nações',
+  Localidade: 'Lisboa',
+  CodPostal: '1000-000',
+  Latitude: 41.2637,
+  Longitude: -8.3679,
+};
+
+export const dgegStationFuelGasFixture: DGEGStationFuel = {
+  Id: 1,
+  Nome: 'Estação A',
+  TipoPosto: 'Outro',
+  Municipio: 'Lisboa',
+  Preco: '1,140 €',
+  Marca: 'Marca A',
+  Combustivel: 'Gás Natural Comprimido',
+  DataAtualizacao: '2026-08-31 15:41',
+  Distrito: 'Lisboa',
+  Morada: 'Parque das Nações',
+  Localidade: 'Lisboa',
+  CodPostal: '1000-000',
+  Latitude: 41.2637,
+  Longitude: -8.3679,
+};
+
+export const dgegStationFuelsFixture: DGEGStationFuel[] = [
+  dgegStationFuelPetrolFixture,
+  dgegStationFuelGasFixture,
+];
+
+export const stationFuelPetrolFixture: StationFuel = {
+  name: 'Gasolina',
+  price: '2,140 €',
+  updatedAt: '2026-08-31 15:40',
+};
+
+export const stationFuelGasFixture: StationFuel = {
+  name: 'Gás Natural Comprimido',
+  price: '1,140 €',
+  updatedAt: '2026-08-31 15:41',
+};
+
+export const stationAFixture: Station = {
+  id: 1,
+  name: 'Estação A',
+  brand: 'Marca A',
+  district: 'Lisboa',
+  municipality: 'Lisboa',
+  address: 'Parque das Nações',
+  town: 'Lisboa',
+  postalCode: '1000-000',
+  latitude: 41.2637,
+  longitude: -8.3679,
+  fuels: [
+    stationFuelPetrolFixture,
+    stationFuelGasFixture,
+  ],
+};
+
+export const stationsFixture: Station[] = [
+  stationAFixture,
 ];

@@ -1,9 +1,17 @@
-import { BRANDS_URL, DISTRICTS_URL, FUELS_URL, MUNICIPALITIES_URL } from './client.constant';
+import {
+  BRANDS_URL,
+  DISTRICTS_URL,
+  FUELS_URL,
+  MUNICIPALITIES_URL,
+  STATION_PARAM_PAGE_SIZE,
+  STATIONS_URL,
+} from './client.constant';
 import {
   mapDGEGBrandsToBrands,
   mapDGEGDistrictsToDistricts,
   mapDGEGFuelsToFuels,
   mapDGEGMunicipalitiesToMunicipalities,
+  mapDGEGStationFuelsToStations,
 } from './client.mapper';
 import type {
   District,
@@ -15,6 +23,8 @@ import type {
   Fuel,
   Brand,
   DGEGFuel,
+  StationFilters,
+  Station, DGEGStationFuel,
 } from './client.type';
 
 export class DGEGClient {
@@ -67,11 +77,14 @@ export class DGEGClient {
    */
   async getMunicipalities(districtId?: number): Promise<Municipality[]> {
     try {
-      const municipalityUrl = districtId
-        ? `${MUNICIPALITIES_URL}?idDistrito=${districtId}`
+      const params = new URLSearchParams();
+
+      if (districtId) params.append('idDistrito', String(districtId));
+      const municipalitiesUrl = districtId
+        ? `${MUNICIPALITIES_URL}?${params.toString()}`
         : MUNICIPALITIES_URL;
 
-      const response = await this.fetch<DGEGMunicipality[]>(municipalityUrl);
+      const response = await this.fetch<DGEGMunicipality[]>(municipalitiesUrl);
 
       if (!response.resultado) return [];
 
@@ -112,6 +125,33 @@ export class DGEGClient {
       return mapDGEGFuelsToFuels(response.resultado);
     } catch (error) {
       this.logFetchError('fuels', error);
+
+      return [];
+    }
+  }
+
+  /**
+   * Fetches stations, optionally filtered by district ID, municipality ID, brand ID and fuel type IDs.
+   */
+  async getStations(filters: StationFilters = {}): Promise<Station[]> {
+    try {
+      const params = new URLSearchParams();
+
+      if (filters.districtId) params.append('idDistrito', String(filters.districtId));
+      if (filters.municipalityIds?.length) params.append('idsMunicipios', filters.municipalityIds.join(','));
+      if (filters.brandId) params.append('idMarca', String(filters.brandId));
+      if (filters.fuelTypeIds?.length) params.append('idsTiposComb', filters.fuelTypeIds.join(','));
+      if (filters.stationTypeId) params.append('idTipoPosto', String(filters.stationTypeId));
+      params.append('qtdPorPagina', STATION_PARAM_PAGE_SIZE);
+
+      const stationsUrl = `${STATIONS_URL}?${params.toString()}`;
+      const response = await this.fetch<DGEGStationFuel[]>(stationsUrl);
+
+      if (!response.resultado) return [];
+
+      return mapDGEGStationFuelsToStations(response.resultado);
+    } catch (error) {
+      this.logFetchError('stations', error);
 
       return [];
     }

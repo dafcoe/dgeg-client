@@ -25,6 +25,16 @@ async function run() {
 
   const fuels = await client.getFuels();
   console.log(`${fuels.length} fuels found:`, fuels);
+
+  console.log('\n');
+
+  const stations = await client.getStations();
+  console.log(`${stations.length} stations found:`, stations);
+
+  console.log('\n');
+
+  const castroMarimStations = await client.getStations({ municipalityIds: [107] });
+  console.log(`${castroMarimStations.length} stations found in Castro Marim:`, castroMarimStations);
 }
 
 run();
