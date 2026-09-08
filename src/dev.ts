@@ -13,13 +13,18 @@ async function run() {
 
   console.log('\n');
 
-  const faroMunicipalities = await client.getMunicipalities(8);
+  const faroMunicipalities = await client.getMunicipalities({ districtId: 8 });
   console.log(`${faroMunicipalities.length} municipalities found in Faro:`, faroMunicipalities);
 
   console.log('\n');
 
   const brands = await client.getBrands();
   console.log(`${brands.length} brands found:`, brands);
+
+  console.log('\n');
+
+  const stationTypes = await client.getStationTypes();
+  console.log(`${stationTypes.length} station types found:`, stationTypes);
 
   console.log('\n');
 

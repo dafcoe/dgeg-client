@@ -3,6 +3,10 @@ export interface DGEGDistrict {
   Descritivo: string;
 }
 
+export interface DGEGMunicipalityFilters {
+  idDistrito?: number;
+}
+
 export interface DGEGMunicipality {
   Id: number;
   Descritivo: string;
@@ -15,6 +19,11 @@ export interface DGEGBrand {
   Descritivo: string;
 }
 
+export interface DGEGStationType {
+  Id: number;
+  Descritivo: string;
+}
+
 export interface DGEGFuel {
   Id: number;
   Descritivo: string;
@@ -23,6 +32,16 @@ export interface DGEGFuel {
   fl_rodoviario: boolean;
   fl_ativo: boolean;
   BackGroundColor: string | null;
+}
+
+export interface DGEGStationFuelFilters {
+  idDistrito?: number;
+  idsMunicipios?: number[];
+  idMarca?: number;
+  idsTiposComb?: number[];
+  idTipoPosto?: number;
+  qtdPorPagina?: number;
+  pagina?: number;
 }
 
 export interface DGEGStationFuel {
@@ -41,56 +60,6 @@ export interface DGEGStationFuel {
   Latitude: number;
   Longitude: number;
   Quantidade?: number;
-}
-
-export interface District {
-  id: number;
-  name: string;
-}
-
-export interface Municipality {
-  id: number;
-  idDistrict: number;
-  name: string;
-}
-
-export interface Brand {
-  id: number;
-  name: string;
-}
-
-export interface Fuel {
-  id: number;
-  name: string;
-  measurementUnit: string;
-}
-
-export interface StationFuel {
-  name: string;
-  price: string;
-  updatedAt: string;
-}
-
-export interface Station {
-  id: number;
-  name: string;
-  brand: string;
-  district: string;
-  municipality: string;
-  address: string;
-  town: string;
-  postalCode: string;
-  latitude: number;
-  longitude: number;
-  fuels: StationFuel[];
-}
-
-export interface StationFilters {
-  districtId?: number;
-  municipalityIds?: number[];
-  brandId?: number;
-  fuelTypeIds?: number[];
-  stationTypeId?: number;
 }
 
 export interface DGEGResponse<T> {

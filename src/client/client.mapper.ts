@@ -1,12 +1,23 @@
 import {
-  Brand,
   DGEGBrand,
   DGEGDistrict,
   DGEGFuel,
-  DGEGMunicipality, type DGEGStationFuel,
+  DGEGMunicipality,
+  DGEGMunicipalityFilters,
+  DGEGStationFuel,
+  DGEGStationFuelFilters,
+  DGEGStationType,
+} from '../http-client';
+import {
+  Brand,
   District,
   Fuel,
-  Municipality, Station, StationFuel,
+  Municipality,
+  MunicipalityFilters,
+  Station,
+  StationFilters,
+  StationFuel,
+  StationType,
 } from './client.type';
 
 export function mapDGEGDistrictToDistrict(dgegDistrict: DGEGDistrict): District {
@@ -41,6 +52,17 @@ export function mapDGEGBrandToBrand(dgegBrand: DGEGBrand): Brand {
 
 export function mapDGEGBrandsToBrands(dgegBrands: DGEGBrand[]): Brand[] {
   return dgegBrands.map(mapDGEGBrandToBrand);
+}
+
+export function mapDGEGStationTypeToStationType(dgegStationType: DGEGStationType): StationType {
+  return {
+    id: dgegStationType.Id,
+    name: dgegStationType.Descritivo,
+  };
+}
+
+export function mapDGEGStationTypesToStationTypes(dgegStationTypes: DGEGStationType[]): StationType[] {
+  return dgegStationTypes.map(mapDGEGStationTypeToStationType);
 }
 
 export function mapDGEGFuelToFuel(dgegFuel: DGEGFuel): Fuel {
@@ -95,4 +117,28 @@ export function mapDGEGStationFuelsToStations(dgegStationFuels: DGEGStationFuel[
   });
 
   return Array.from(stations.values());
+}
+
+export function mapMunicipalityFiltersToDGEGMunicipalityFilters(
+  municipalityFilters: MunicipalityFilters,
+): DGEGMunicipalityFilters {
+  const filters: DGEGMunicipalityFilters = {};
+
+  if (municipalityFilters.districtId) filters.idDistrito = municipalityFilters.districtId;
+
+  return filters;
+}
+
+export function mapStationFiltersToDGEGStationFilters(
+  stationFilters: StationFilters,
+): DGEGStationFuelFilters {
+  const filters: DGEGStationFuelFilters = {};
+
+  if (stationFilters.districtId) filters.idDistrito = stationFilters.districtId;
+  if (stationFilters.municipalityIds) filters.idsMunicipios = stationFilters.municipalityIds;
+  if (stationFilters.brandId) filters.idMarca = stationFilters.brandId;
+  if (stationFilters.fuelTypeIds) filters.idsTiposComb = stationFilters.fuelTypeIds;
+  if (stationFilters.stationTypeId) filters.idTipoPosto = stationFilters.stationTypeId;
+
+  return filters;
 }

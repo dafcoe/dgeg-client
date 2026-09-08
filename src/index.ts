@@ -1,2 +1,2 @@
 export { DGEGClient } from './client';
-export type { District, Municipality, Brand, Fuel, Station } from './client.type';
+export type { District, Municipality, Brand, StationType, Fuel, Station } from './client';
