@@ -16,7 +16,7 @@ import {
   Municipality,
   MunicipalityFilters,
   Station,
-  StationFilters,
+  StationFilters, StationType,
 } from './client.type';
 
 export class DGEGClient {
@@ -88,7 +88,7 @@ export class DGEGClient {
   /**
    * Fetches the complete list of available station types.
    */
-  async getStationTypes(): Promise<Brand[]> {
+  async getStationTypes(): Promise<StationType[]> {
     try {
       const response = await this.httpClient.getStationTypes();
 

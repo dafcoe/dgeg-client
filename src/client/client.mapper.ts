@@ -81,13 +81,13 @@ export function mapDGEGStationFuelToStationFuel(
   dgegStationFuel: DGEGStationFuel,
   fuelMap: Map<string, Fuel> = new Map(),
 ): StationFuel {
-  const fuel = fuelMap.get(dgegStationFuel.Combustivel.toLocaleLowerCase().trim());
+  const fuel = fuelMap.get(dgegStationFuel.Combustivel.toLowerCase().trim());
 
   return {
-    id: fuel?.id || -1,
+    id: fuel?.id ?? -1,
     name: dgegStationFuel.Combustivel,
     price: dgegStationFuel.Preco,
-    measurementUnit: fuel?.measurementUnit || '',
+    measurementUnit: fuel?.measurementUnit ?? '',
     updatedAt: dgegStationFuel.DataAtualizacao,
   };
 }

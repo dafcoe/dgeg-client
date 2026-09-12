@@ -1,24 +1,26 @@
 import { Mocked, MockInstance } from 'vitest';
 import {
-  dgegBrandAFixture,
-  dgegBrandsFixture,
-  dgegDistrictLisboaFixture,
-  dgegDistrictsFixture,
-  dgegFuelGasFixture,
-  dgegFuelPetrolFixture,
-  dgegFuelsFixture,
+  DGEGFuel,
   DGEGHttpClient,
-  dgegMunicipalitiesFixture,
-  DGEGMunicipalityFilters,
-  dgegMunicipalityLisboaFixture,
-  dgegMunicipalitySintraFixture,
-  DGEGStationFuelFilters,
-  dgegStationFuelsFixture,
-  dgegStationTypeFixtures,
-  dgegStationTypeHighwayFixture,
+  DGEGMunicipality,
+  DGEGStationFuel,
 } from '../../http-client';
 import { DGEGClient } from '../client';
 import { STATION_PARAM_PAGE_SIZE } from '../client.constant';
+import {
+  mapDGEGBrandsToBrands,
+  mapDGEGDistrictsToDistricts,
+  mapDGEGFuelsToFuels,
+  mapDGEGMunicipalitiesToMunicipalities,
+  mapDGEGStationFuelsToStations,
+  mapDGEGStationTypesToStationTypes,
+  mapMunicipalityFiltersToDGEGMunicipalityFilters,
+  mapStationFiltersToDGEGStationFilters,
+} from '../client.mapper';
+import {
+  MunicipalityFilters,
+  StationFilters,
+} from '../client.type';
 import {
   brandsFixture,
   districtsFixture,
@@ -27,29 +29,34 @@ import {
   stationsFixture,
   stationTypeFixtures,
 } from './client.fixture';
-import { createDGEGSuccessResponse, createError } from './client.spec-util';
 import {
-  MunicipalityFilters,
-  StationFilters,
-} from '../client.type';
+  createDGEGSuccessResponse,
+  createError,
+  createHttpClientMock,
+  mockMappers,
+} from './client.spec-util';
+
+vi.mock('../client.mapper', () => ({
+  mapDGEGBrandsToBrands: vi.fn(),
+  mapDGEGDistrictsToDistricts: vi.fn(),
+  mapDGEGFuelsToFuels: vi.fn(),
+  mapDGEGMunicipalitiesToMunicipalities: vi.fn(),
+  mapDGEGStationFuelsToStations: vi.fn(),
+  mapDGEGStationTypesToStationTypes: vi.fn(),
+  mapMunicipalityFiltersToDGEGMunicipalityFilters: vi.fn(),
+  mapStationFiltersToDGEGStationFilters: vi.fn(),
+}));
 
 describe('DGEGClient', () => {
-  let mockHttpClient: Mocked<DGEGHttpClient>;
+  let httpClientMock: Mocked<DGEGHttpClient>;
   let client: DGEGClient;
   let consoleErrorSpy: MockInstance;
 
   beforeEach(() => {
-    mockHttpClient = {
-      getDistricts: vi.fn(),
-      getMunicipalities: vi.fn(),
-      getBrands: vi.fn(),
-      getStationTypes: vi.fn(),
-      getFuels: vi.fn(),
-      getStations: vi.fn(),
-    } as unknown as Mocked<DGEGHttpClient>;
-
-    client = new DGEGClient(mockHttpClient);
+    httpClientMock = createHttpClientMock();
+    client = new DGEGClient(httpClientMock);
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockMappers();
   });
 
   afterEach(() => {
@@ -59,37 +66,40 @@ describe('DGEGClient', () => {
   describe('getDistricts', () => {
     it('should return an array of districts when the http-client request succeeds and provides outcome', async () => {
       // Assemble
-      mockHttpClient.getDistricts.mockResolvedValueOnce(createDGEGSuccessResponse(dgegDistrictsFixture));
+      const dgegDistricts = [{ Id: 1, Descritivo: 'Lisboa' }];
+      httpClientMock.getDistricts.mockResolvedValueOnce(createDGEGSuccessResponse(dgegDistricts));
 
       // Act
       const districts = await client.getDistricts();
 
       // Assert
-      expect(mockHttpClient.getDistricts).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getDistricts).toHaveBeenCalledTimes(1);
+      expect(mapDGEGDistrictsToDistricts).toHaveBeenCalledWith(dgegDistricts);
       expect(districts).toEqual(districtsFixture);
     });
 
     it('should return an empty array when the http-client request succeeds but no outcome is provided', async () => {
       // Assemble
-      mockHttpClient.getDistricts.mockResolvedValueOnce(createDGEGSuccessResponse());
+      httpClientMock.getDistricts.mockResolvedValueOnce(createDGEGSuccessResponse());
 
       // Act
       const districts = await client.getDistricts();
 
       // Assert
-      expect(mockHttpClient.getDistricts).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getDistricts).toHaveBeenCalledTimes(1);
+      expect(mapDGEGDistrictsToDistricts).not.toHaveBeenCalled();
       expect(districts).toEqual([]);
     });
 
     it('should return an empty array and log an error when the http-client request fails', async () => {
       // Assemble
-      mockHttpClient.getDistricts.mockRejectedValueOnce(createError());
+      httpClientMock.getDistricts.mockRejectedValueOnce(createError());
 
       // Act
       const districts = await client.getDistricts();
 
       // Assert
-      expect(mockHttpClient.getDistricts).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getDistricts).toHaveBeenCalledTimes(1);
       expect(districts).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch districts (Network error)');
     });
@@ -98,54 +108,61 @@ describe('DGEGClient', () => {
   describe('getMunicipalities', () => {
     it('should return an array of municipalities when the http-client request succeeds and provides outcome (without filters)', async () => {
       // Assemble
-      mockHttpClient.getMunicipalities.mockResolvedValueOnce(createDGEGSuccessResponse(dgegMunicipalitiesFixture));
+      const dgegMunicipalities = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGMunicipality[];
+      httpClientMock.getMunicipalities.mockResolvedValueOnce(createDGEGSuccessResponse(dgegMunicipalities));
 
       // Act
       const municipalities = await client.getMunicipalities();
 
       // Assert
-      expect(mockHttpClient.getMunicipalities).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledWith({});
+      expect(mapDGEGMunicipalitiesToMunicipalities).toHaveBeenCalledWith(dgegMunicipalities);
       expect(municipalities).toEqual(municipalitiesFixture);
     });
 
     it('should return an array of municipalities when the http-client request succeeds and provides outcome (with filters)', async () => {
       // Assemble
-      const filterDistrictId = dgegDistrictLisboaFixture.Id;
-      const filters: MunicipalityFilters = { districtId: filterDistrictId };
-      const expectedDgegFilters: DGEGMunicipalityFilters = { idDistrito: filterDistrictId };
+      const filters: MunicipalityFilters = { districtId: 1 };
+      const expectedDgegFilters = { idDistrito: 1 };
+      const dgegMunicipalities = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGMunicipality[];
 
-      mockHttpClient.getMunicipalities.mockResolvedValueOnce(createDGEGSuccessResponse(dgegMunicipalitiesFixture));
+      vi.mocked(mapMunicipalityFiltersToDGEGMunicipalityFilters).mockReturnValueOnce(expectedDgegFilters);
+      httpClientMock.getMunicipalities.mockResolvedValueOnce(createDGEGSuccessResponse(dgegMunicipalities));
 
       // Act
       const municipalities = await client.getMunicipalities(filters);
 
       // Assert
-      expect(mockHttpClient.getMunicipalities).toHaveBeenCalledTimes(1);
-      expect(mockHttpClient.getMunicipalities).toHaveBeenCalledWith(expectedDgegFilters);
+      expect(mapMunicipalityFiltersToDGEGMunicipalityFilters).toHaveBeenCalledWith(filters);
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledWith(expectedDgegFilters);
+      expect(mapDGEGMunicipalitiesToMunicipalities).toHaveBeenCalledWith(dgegMunicipalities);
       expect(municipalities).toEqual(municipalitiesFixture);
     });
 
     it('should return an empty array when the http-client request succeeds but no outcome is provided', async () => {
       // Assemble
-      mockHttpClient.getMunicipalities.mockResolvedValueOnce(createDGEGSuccessResponse());
+      httpClientMock.getMunicipalities.mockResolvedValueOnce(createDGEGSuccessResponse());
 
       // Act
       const municipalities = await client.getMunicipalities();
 
       // Assert
-      expect(mockHttpClient.getMunicipalities).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(1);
+      expect(mapDGEGMunicipalitiesToMunicipalities).not.toHaveBeenCalled();
       expect(municipalities).toEqual([]);
     });
 
     it('should return an empty array and log an error when the http-client request fails', async () => {
       // Assemble
-      mockHttpClient.getMunicipalities.mockRejectedValueOnce(createError());
+      httpClientMock.getMunicipalities.mockRejectedValueOnce(createError());
 
       // Act
       const municipalities = await client.getMunicipalities();
 
       // Assert
-      expect(mockHttpClient.getMunicipalities).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(1);
       expect(municipalities).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch municipalities (Network error)');
     });
@@ -154,37 +171,40 @@ describe('DGEGClient', () => {
   describe('getBrands', () => {
     it('should return an array of brands when the http-client request succeeds and provides outcome', async () => {
       // Assemble
-      mockHttpClient.getBrands.mockResolvedValueOnce(createDGEGSuccessResponse(dgegBrandsFixture));
+      const dgegBrands = [{ Id: 1, Descritivo: 'Marca A' }];
+      httpClientMock.getBrands.mockResolvedValueOnce(createDGEGSuccessResponse(dgegBrands));
 
       // Act
       const brands = await client.getBrands();
 
       // Assert
-      expect(mockHttpClient.getBrands).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getBrands).toHaveBeenCalledTimes(1);
+      expect(mapDGEGBrandsToBrands).toHaveBeenCalledWith(dgegBrands);
       expect(brands).toEqual(brandsFixture);
     });
 
     it('should return an empty array when the http-client request succeeds but no outcome is provided', async () => {
       // Assemble
-      mockHttpClient.getBrands.mockResolvedValueOnce(createDGEGSuccessResponse());
+      httpClientMock.getBrands.mockResolvedValueOnce(createDGEGSuccessResponse());
 
       // Act
       const brands = await client.getBrands();
 
       // Assert
-      expect(mockHttpClient.getBrands).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getBrands).toHaveBeenCalledTimes(1);
+      expect(mapDGEGBrandsToBrands).not.toHaveBeenCalled();
       expect(brands).toEqual([]);
     });
 
     it('should return an empty array and log an error when the http-client request fails', async () => {
       // Assemble
-      mockHttpClient.getBrands.mockRejectedValueOnce(createError());
+      httpClientMock.getBrands.mockRejectedValueOnce(createError());
 
       // Act
       const brands = await client.getBrands();
 
       // Assert
-      expect(mockHttpClient.getBrands).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getBrands).toHaveBeenCalledTimes(1);
       expect(brands).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch brands (Network error)');
     });
@@ -193,37 +213,40 @@ describe('DGEGClient', () => {
   describe('getStationTypes', () => {
     it('should return an array of station types when the http-client request succeeds and provides outcome', async () => {
       // Assemble
-      mockHttpClient.getStationTypes.mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationTypeFixtures));
+      const dgegStationTypes = [{ Id: 1, Descritivo: 'Autoestrada' }];
+      httpClientMock.getStationTypes.mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationTypes));
 
       // Act
       const stationTypes = await client.getStationTypes();
 
       // Assert
-      expect(mockHttpClient.getStationTypes).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getStationTypes).toHaveBeenCalledTimes(1);
+      expect(mapDGEGStationTypesToStationTypes).toHaveBeenCalledWith(dgegStationTypes);
       expect(stationTypes).toEqual(stationTypeFixtures);
     });
 
     it('should return an empty array when the http-client request succeeds but no outcome is provided', async () => {
       // Assemble
-      mockHttpClient.getStationTypes.mockResolvedValueOnce(createDGEGSuccessResponse());
+      httpClientMock.getStationTypes.mockResolvedValueOnce(createDGEGSuccessResponse());
 
       // Act
       const stationTypes = await client.getStationTypes();
 
       // Assert
-      expect(mockHttpClient.getStationTypes).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getStationTypes).toHaveBeenCalledTimes(1);
+      expect(mapDGEGStationTypesToStationTypes).not.toHaveBeenCalled();
       expect(stationTypes).toEqual([]);
     });
 
     it('should return an empty array and log an error when the http-client request fails', async () => {
       // Assemble
-      mockHttpClient.getStationTypes.mockRejectedValueOnce(createError());
+      httpClientMock.getStationTypes.mockRejectedValueOnce(createError());
 
       // Act
       const stationTypes = await client.getStationTypes();
 
       // Assert
-      expect(mockHttpClient.getStationTypes).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getStationTypes).toHaveBeenCalledTimes(1);
       expect(stationTypes).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch station types (Network error)');
     });
@@ -232,37 +255,40 @@ describe('DGEGClient', () => {
   describe('getFuels', () => {
     it('should return an array of fuels when the http-client request succeeds and provides outcome', async () => {
       // Assemble
-      mockHttpClient.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuelsFixture));
+      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
+      httpClientMock.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuels));
 
       // Act
       const fuels = await client.getFuels();
 
       // Assert
-      expect(mockHttpClient.getFuels).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(1);
+      expect(mapDGEGFuelsToFuels).toHaveBeenCalledWith(dgegFuels);
       expect(fuels).toEqual(fuelsFixture);
     });
 
     it('should return an empty array when the http-client request succeeds but no outcome is provided', async () => {
       // Assemble
-      mockHttpClient.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse());
+      httpClientMock.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse());
 
       // Act
       const fuels = await client.getFuels();
 
       // Assert
-      expect(mockHttpClient.getFuels).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(1);
+      expect(mapDGEGFuelsToFuels).not.toHaveBeenCalled();
       expect(fuels).toEqual([]);
     });
 
     it('should return an empty array and log an error when the http-client request fails', async () => {
       // Assemble
-      mockHttpClient.getFuels.mockRejectedValueOnce(createError());
+      httpClientMock.getFuels.mockRejectedValueOnce(createError());
 
       // Act
       const fuels = await client.getFuels();
 
       // Assert
-      expect(mockHttpClient.getFuels).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(1);
       expect(fuels).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch fuels (Network error)');
     });
@@ -271,75 +297,86 @@ describe('DGEGClient', () => {
   describe('getStations', () => {
     it('should return an array of stations when the http-client request succeeds and provides outcome (without filters)', async () => {
       // Assemble
-      const filterDistrictId = dgegDistrictLisboaFixture.Id;
-      const filterMunicipalityIds = [dgegMunicipalityLisboaFixture.Id, dgegMunicipalitySintraFixture.Id];
-      const filterBrandId = dgegBrandAFixture.Id;
-      const filterFuelTypeIds = [dgegFuelPetrolFixture.Id, dgegFuelGasFixture.Id];
-      const filterStationTypeId = dgegStationTypeHighwayFixture.Id;
+      const dgegStationFuels = [{ Id: 1, Nome: 'Estação A' }] as DGEGStationFuel[];
+      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
 
-      const filters: StationFilters = {
-        districtId: filterDistrictId,
-        municipalityIds: filterMunicipalityIds,
-        brandId: filterBrandId,
-        fuelTypeIds: filterFuelTypeIds,
-        stationTypeId: filterStationTypeId,
-      };
-
-      const expectedDgegFilters: DGEGStationFuelFilters = {
-        idDistrito: filterDistrictId,
-        idsMunicipios: filterMunicipalityIds,
-        idMarca: filterBrandId,
-        idsTiposComb: filterFuelTypeIds,
-        idTipoPosto: filterStationTypeId,
-        qtdPorPagina: STATION_PARAM_PAGE_SIZE,
-      };
-
-      mockHttpClient.getStations.mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationFuelsFixture));
-      mockHttpClient.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuelsFixture));
+      httpClientMock.getStations.mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationFuels));
+      httpClientMock.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuels));
 
       // Act
-      const stations = await client.getStations(filters);
+      const stations = await client.getStations();
 
       // Assert
-      expect(mockHttpClient.getStations).toHaveBeenCalledTimes(1);
-      expect(mockHttpClient.getStations).toHaveBeenCalledWith(expectedDgegFilters);
+      expect(httpClientMock.getStations).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getStations).toHaveBeenCalledWith({ qtdPorPagina: STATION_PARAM_PAGE_SIZE });
+      expect(mapDGEGStationFuelsToStations).toHaveBeenCalledWith(dgegStationFuels, fuelsFixture);
       expect(stations).toEqual(stationsFixture);
     });
 
     it('should return an array of stations when the http-client request succeeds and provides outcome (with filters)', async () => {
       // Assemble
-      mockHttpClient.getStations.mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationFuelsFixture));
-      mockHttpClient.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuelsFixture));
+      const filters: StationFilters = {
+        districtId: 1,
+        municipalityIds: [1, 2],
+        brandId: 1,
+        fuelTypeIds: [1, 2],
+        stationTypeId: 1,
+      };
+
+      const mappedFilters = {
+        idDistrito: 1,
+        idsMunicipios: [1, 2],
+        idMarca: 1,
+        idsTiposComb: [1, 2],
+        idTipoPosto: 1,
+      };
+
+      const dgegStationFuels = [{ Id: 1, Nome: 'Estação A' }] as DGEGStationFuel[];
+      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
+
+      vi.mocked(mapStationFiltersToDGEGStationFilters).mockReturnValueOnce(mappedFilters);
+      httpClientMock.getStations.mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationFuels));
+      httpClientMock.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuels));
 
       // Act
-      const stations = await client.getStations();
+      const stations = await client.getStations(filters);
 
       // Assert
-      expect(mockHttpClient.getStations).toHaveBeenCalledTimes(1);
+      expect(mapStationFiltersToDGEGStationFilters).toHaveBeenCalledWith(filters);
+      expect(httpClientMock.getStations).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getStations).toHaveBeenCalledWith({
+        ...mappedFilters,
+        qtdPorPagina: STATION_PARAM_PAGE_SIZE,
+      });
+      expect(mapDGEGStationFuelsToStations).toHaveBeenCalledWith(dgegStationFuels, fuelsFixture);
       expect(stations).toEqual(stationsFixture);
     });
 
     it('should return an empty array when the http-client request succeeds but no outcome is provided', async () => {
       // Assemble
-      mockHttpClient.getStations.mockResolvedValueOnce(createDGEGSuccessResponse());
+      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
+
+      httpClientMock.getStations.mockResolvedValueOnce(createDGEGSuccessResponse());
+      httpClientMock.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuels));
 
       // Act
       const stations = await client.getStations();
 
       // Assert
-      expect(mockHttpClient.getStations).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getStations).toHaveBeenCalledTimes(1);
+      expect(mapDGEGStationFuelsToStations).not.toHaveBeenCalled();
       expect(stations).toEqual([]);
     });
 
     it('should return an empty array and log an error when the http-client request fails', async () => {
       // Assemble
-      mockHttpClient.getStations.mockRejectedValueOnce('Network error');
+      httpClientMock.getStations.mockRejectedValueOnce('Network error');
 
       // Act
       const stations = await client.getStations();
 
       // Assert
-      expect(mockHttpClient.getStations).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getStations).toHaveBeenCalledTimes(1);
       expect(stations).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch stations (Network error)');
     });
