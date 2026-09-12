@@ -30,8 +30,10 @@ export interface Fuel {
 }
 
 export interface StationFuel {
+  id: number;
   name: string;
   price: string;
+  measurementUnit: string;
   updatedAt: string;
 }
 

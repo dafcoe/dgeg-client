@@ -77,10 +77,17 @@ export function mapDGEGFuelsToFuels(dgegFuels: DGEGFuel[]): Fuel[] {
   return dgegFuels.map(mapDGEGFuelToFuel);
 }
 
-export function mapDGEGStationFuelToStationFuel(dgegStationFuel: DGEGStationFuel): StationFuel {
+export function mapDGEGStationFuelToStationFuel(
+  dgegStationFuel: DGEGStationFuel,
+  fuelMap: Map<string, Fuel> = new Map(),
+): StationFuel {
+  const fuel = fuelMap.get(dgegStationFuel.Combustivel.toLocaleLowerCase().trim());
+
   return {
+    id: fuel?.id || -1,
     name: dgegStationFuel.Combustivel,
     price: dgegStationFuel.Preco,
+    measurementUnit: fuel?.measurementUnit || '',
     updatedAt: dgegStationFuel.DataAtualizacao,
   };
 }
@@ -101,11 +108,17 @@ export function mapDGEGStationFuelToStationWithoutFuels(dgegStationFuel: DGEGSta
   };
 }
 
-export function mapDGEGStationFuelsToStations(dgegStationFuels: DGEGStationFuel[]): Station[] {
+export function mapDGEGStationFuelsToStations(
+  dgegStationFuels: DGEGStationFuel[],
+  fuels: Fuel[] = [],
+): Station[] {
   const stations = new Map<number, Station>();
+  const fuelsMap = new Map<string, Fuel>(
+    fuels.map((fuel) => [fuel.name.toLowerCase().trim(), fuel]),
+  );
 
   dgegStationFuels.forEach((dgegStationFuel) => {
-    const stationFuel = mapDGEGStationFuelToStationFuel(dgegStationFuel);
+    const stationFuel = mapDGEGStationFuelToStationFuel(dgegStationFuel, fuelsMap);
     let station = stations.get(dgegStationFuel.Id);
 
     if (!station) {

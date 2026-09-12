@@ -112,14 +112,18 @@ export const fuelsFixture: Fuel[] = [
 // ###############################################################
 
 export const stationFuelPetrolFixture: StationFuel = {
+  id: 1,
   name: 'Gasolina',
   price: '2,140 €',
+  measurementUnit: 'litro',
   updatedAt: '2026-08-31 15:40',
 };
 
 export const stationFuelGasFixture: StationFuel = {
+  id: 2,
   name: 'Gás Natural Comprimido',
   price: '1,140 €',
+  measurementUnit: 'm3',
   updatedAt: '2026-08-31 15:41',
 };
 

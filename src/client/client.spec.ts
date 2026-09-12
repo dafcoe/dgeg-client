@@ -294,6 +294,7 @@ describe('DGEGClient', () => {
       };
 
       mockHttpClient.getStations.mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationFuelsFixture));
+      mockHttpClient.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuelsFixture));
 
       // Act
       const stations = await client.getStations(filters);
@@ -307,6 +308,7 @@ describe('DGEGClient', () => {
     it('should return an array of stations when the http-client request succeeds and provides outcome (with filters)', async () => {
       // Assemble
       mockHttpClient.getStations.mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationFuelsFixture));
+      mockHttpClient.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuelsFixture));
 
       // Act
       const stations = await client.getStations();

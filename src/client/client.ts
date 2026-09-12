@@ -128,11 +128,15 @@ export class DGEGClient {
         ...mapStationFiltersToDGEGStationFilters(filters),
         qtdPorPagina: STATION_PARAM_PAGE_SIZE,
       };
-      const response = await this.httpClient.getStations(dgegFilters);
+
+      const [response, fuels] = await Promise.all([
+        this.httpClient.getStations(dgegFilters),
+        this.getFuels(),
+      ]);
 
       if (!response.resultado) return [];
 
-      return mapDGEGStationFuelsToStations(response.resultado);
+      return mapDGEGStationFuelsToStations(response.resultado, fuels);
     } catch (error) {
       this.logFetchError('stations', error);
 
