@@ -1,4 +1,4 @@
-import { DGEGResponse } from '../http-client';
+import { DGEGResponse } from '../../http-client';
 
 export function createDGEGSuccessResponse<T>(result?: T): DGEGResponse<T> {
   return {

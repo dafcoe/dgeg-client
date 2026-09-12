@@ -16,21 +16,22 @@ import {
   dgegStationFuelsFixture,
   dgegStationTypeFixtures,
   dgegStationTypeHighwayFixture,
-} from '../http-client';
-import { DGEGClient } from './client';
-import { STATION_PARAM_PAGE_SIZE } from './client.constant';
+} from '../../http-client';
+import { DGEGClient } from '../client';
+import { STATION_PARAM_PAGE_SIZE } from '../client.constant';
 import {
   brandsFixture,
   districtsFixture,
   fuelsFixture,
   municipalitiesFixture,
-  stationsFixture, stationTypeFixtures,
+  stationsFixture,
+  stationTypeFixtures,
 } from './client.fixture';
-import { createDGEGSuccessResponse, createError } from './client.spec-utils';
+import { createDGEGSuccessResponse, createError } from './client.spec-util';
 import {
   MunicipalityFilters,
   StationFilters,
-} from './client.type';
+} from '../client.type';
 
 describe('DGEGClient', () => {
   let mockHttpClient: Mocked<DGEGHttpClient>;

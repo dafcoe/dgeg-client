@@ -5,7 +5,7 @@ import type {
   DGEGMunicipality,
   DGEGStationFuel,
   DGEGStationType,
-} from './http-client.type';
+} from '../http-client.type';
 
 // ###############################################################
 // Districts

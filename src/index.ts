@@ -6,5 +6,5 @@ export type {
   StationType,
   Fuel,
   Station,
-  StationFuel
+  StationFuel,
 } from './client';

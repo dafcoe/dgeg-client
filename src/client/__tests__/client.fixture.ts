@@ -6,7 +6,7 @@ import type {
   Station,
   StationFuel,
   StationType,
-} from './client.type';
+} from '../client.type';
 
 // ###############################################################
 // Districts

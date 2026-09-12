@@ -1,4 +1,4 @@
-import { DGEGHttpClient } from './http-client';
+import { DGEGHttpClient } from '../http-client';
 import {
   BRANDS_URL,
   DISTRICTS_URL,
@@ -6,7 +6,8 @@ import {
   MUNICIPALITIES_URL,
   STATION_TYPES_URL,
   STATIONS_URL,
-} from './http-client.constant';
+} from '../http-client.constant';
+import { DGEGMunicipalityFilters, DGEGStationFuelFilters } from '../http-client.type';
 import {
   dgegBrandAFixture,
   dgegBrandsFixture,
@@ -21,8 +22,7 @@ import {
   dgegStationTypeFixtures,
   dgegStationTypeHighwayFixture,
 } from './http-client.fixture';
-import { expectFetchCallWithUrlAndHeaders, mockFetchFailure, mockFetchSuccess } from './http-client.spec-utils';
-import { DGEGMunicipalityFilters, DGEGStationFuelFilters } from './http-client.type';
+import { expectFetchCallWithUrlAndHeaders, mockFetchFailure, mockFetchSuccess } from './http-client.spec-util';
 
 describe('DGEGHttpClient', () => {
   let httpClient: DGEGHttpClient;
