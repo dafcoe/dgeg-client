@@ -58,3 +58,14 @@ export interface StationFilters {
   fuelTypeIds?: number[];
   stationTypeId?: number;
 }
+
+export interface FetchOptions {
+  forceRefresh?: boolean;
+}
+
+export type CacheResource =
+  | 'brands'
+  | 'districts'
+  | 'fuels'
+  | 'municipalities'
+  | 'stationTypes';

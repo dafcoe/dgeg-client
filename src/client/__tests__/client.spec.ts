@@ -1,9 +1,12 @@
 import { Mocked, MockInstance } from 'vitest';
 import {
+  DGEGBrand,
+  DGEGDistrict,
   DGEGFuel,
   DGEGHttpClient,
   DGEGMunicipality,
   DGEGStationFuel,
+  DGEGStationType,
 } from '../../http-client';
 import { DGEGClient } from '../client';
 import { STATION_PARAM_PAGE_SIZE } from '../client.constant';
@@ -103,6 +106,68 @@ describe('DGEGClient', () => {
       expect(districts).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch districts (Network error)');
     });
+
+    it('should cache districts and avoid subsequent network calls', async () => {
+      // Assemble
+      const dgegDistricts = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGDistrict[];
+      httpClientMock.getDistricts.mockResolvedValueOnce(createDGEGSuccessResponse(dgegDistricts));
+
+      // Act
+      const firstCall = await client.getDistricts();
+      const secondCall = await client.getDistricts();
+
+      // Assert
+      expect(httpClientMock.getDistricts).toHaveBeenCalledTimes(1);
+      expect(firstCall).toEqual(districtsFixture);
+      expect(secondCall).toEqual(districtsFixture);
+    });
+
+    it('should share the in-flight promise across concurrent calls', async () => {
+      // Assemble
+      const dgegDistricts = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGDistrict[];
+      httpClientMock.getDistricts.mockResolvedValueOnce(createDGEGSuccessResponse(dgegDistricts));
+
+      // Act
+      const [firstCall, secondCall] = await Promise.all([
+        client.getDistricts(),
+        client.getDistricts(),
+      ]);
+
+      // Assert
+      expect(httpClientMock.getDistricts).toHaveBeenCalledTimes(1);
+      expect(firstCall).toEqual(districtsFixture);
+      expect(secondCall).toEqual(districtsFixture);
+    });
+
+    it('should bypass cache when forceRefresh is true', async () => {
+      // Assemble
+      const dgegDistricts = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGDistrict[];
+      httpClientMock.getDistricts.mockResolvedValue(createDGEGSuccessResponse(dgegDistricts));
+
+      // Act
+      await client.getDistricts();
+      await client.getDistricts({ forceRefresh: true });
+
+      // Assert
+      expect(httpClientMock.getDistricts).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not cache when the request fails, allowing subsequent retry', async () => {
+      // Assemble
+      const dgegDistricts = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGDistrict[];
+      httpClientMock.getDistricts
+        .mockRejectedValueOnce(createError())
+        .mockResolvedValueOnce(createDGEGSuccessResponse(dgegDistricts));
+
+      // Act
+      const firstCall = await client.getDistricts();
+      const secondCall = await client.getDistricts();
+
+      // Assert
+      expect(httpClientMock.getDistricts).toHaveBeenCalledTimes(2);
+      expect(firstCall).toEqual([]);
+      expect(secondCall).toEqual(districtsFixture);
+    });
   });
 
   describe('getMunicipalities', () => {
@@ -166,6 +231,82 @@ describe('DGEGClient', () => {
       expect(municipalities).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch municipalities (Network error)');
     });
+
+    it('should cache municipalities and avoid subsequent network calls (without filters)', async () => {
+      // Assemble
+      const dgegMunicipalities = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGMunicipality[];
+      httpClientMock.getMunicipalities.mockResolvedValueOnce(createDGEGSuccessResponse(dgegMunicipalities));
+
+      // Act
+      const firstCall = await client.getMunicipalities();
+      const secondCall = await client.getMunicipalities();
+
+      // Assert
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(1);
+      expect(firstCall).toEqual(municipalitiesFixture);
+      expect(secondCall).toEqual(municipalitiesFixture);
+    });
+
+    it('should cache municipalities separately for different district filters', async () => {
+      // Assemble
+      const dgegMunicipalities = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGMunicipality[];
+      httpClientMock.getMunicipalities.mockResolvedValue(createDGEGSuccessResponse(dgegMunicipalities));
+
+      // Act
+      await client.getMunicipalities({ districtId: 1 });
+      await client.getMunicipalities({ districtId: 1 });
+      await client.getMunicipalities({ districtId: 2 });
+
+      // Assert
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(2);
+    });
+
+    it('should share the in-flight promise across concurrent calls', async () => {
+      // Assemble
+      const dgegMunicipalities = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGMunicipality[];
+      httpClientMock.getMunicipalities.mockResolvedValueOnce(createDGEGSuccessResponse(dgegMunicipalities));
+
+      // Act
+      const [firstCall, secondCall] = await Promise.all([
+        client.getMunicipalities(),
+        client.getMunicipalities(),
+      ]);
+
+      // Assert
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(1);
+      expect(firstCall).toEqual(municipalitiesFixture);
+      expect(secondCall).toEqual(municipalitiesFixture);
+    });
+
+    it('should bypass cache when forceRefresh is true', async () => {
+      // Assemble
+      const dgegMunicipalities = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGMunicipality[];
+      httpClientMock.getMunicipalities.mockResolvedValue(createDGEGSuccessResponse(dgegMunicipalities));
+
+      // Act
+      await client.getMunicipalities();
+      await client.getMunicipalities({}, { forceRefresh: true });
+
+      // Assert
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not cache when the request fails, allowing subsequent retry', async () => {
+      // Assemble
+      const dgegMunicipalities = [{ Id: 1, Descritivo: 'Lisboa' }] as DGEGMunicipality[];
+      httpClientMock.getMunicipalities
+        .mockRejectedValueOnce(createError())
+        .mockResolvedValueOnce(createDGEGSuccessResponse(dgegMunicipalities));
+
+      // Act
+      const firstCall = await client.getMunicipalities();
+      const secondCall = await client.getMunicipalities();
+
+      // Assert
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(2);
+      expect(firstCall).toEqual([]);
+      expect(secondCall).toEqual(municipalitiesFixture);
+    });
   });
 
   describe('getBrands', () => {
@@ -207,6 +348,68 @@ describe('DGEGClient', () => {
       expect(httpClientMock.getBrands).toHaveBeenCalledTimes(1);
       expect(brands).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch brands (Network error)');
+    });
+
+    it('should cache brands and avoid subsequent network calls', async () => {
+      // Assemble
+      const dgegBrands = [{ Id: 1, Descritivo: 'Marca A' }] as DGEGBrand[];
+      httpClientMock.getBrands.mockResolvedValueOnce(createDGEGSuccessResponse(dgegBrands));
+
+      // Act
+      const firstCall = await client.getBrands();
+      const secondCall = await client.getBrands();
+
+      // Assert
+      expect(httpClientMock.getBrands).toHaveBeenCalledTimes(1);
+      expect(firstCall).toEqual(brandsFixture);
+      expect(secondCall).toEqual(brandsFixture);
+    });
+
+    it('should share the in-flight promise across concurrent calls', async () => {
+      // Assemble
+      const dgegBrands = [{ Id: 1, Descritivo: 'Marca A' }] as DGEGBrand[];
+      httpClientMock.getBrands.mockResolvedValueOnce(createDGEGSuccessResponse(dgegBrands));
+
+      // Act
+      const [firstCall, secondCall] = await Promise.all([
+        client.getBrands(),
+        client.getBrands(),
+      ]);
+
+      // Assert
+      expect(httpClientMock.getBrands).toHaveBeenCalledTimes(1);
+      expect(firstCall).toEqual(brandsFixture);
+      expect(secondCall).toEqual(brandsFixture);
+    });
+
+    it('should bypass cache when forceRefresh is true', async () => {
+      // Assemble
+      const dgegBrands = [{ Id: 1, Descritivo: 'Marca A' }] as DGEGBrand[];
+      httpClientMock.getBrands.mockResolvedValue(createDGEGSuccessResponse(dgegBrands));
+
+      // Act
+      await client.getBrands();
+      await client.getBrands({ forceRefresh: true });
+
+      // Assert
+      expect(httpClientMock.getBrands).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not cache when the request fails, allowing subsequent retry', async () => {
+      // Assemble
+      const dgegBrands = [{ Id: 1, Descritivo: 'Marca A' }] as DGEGBrand[];
+      httpClientMock.getBrands
+        .mockRejectedValueOnce(createError())
+        .mockResolvedValueOnce(createDGEGSuccessResponse(dgegBrands));
+
+      // Act
+      const firstCall = await client.getBrands();
+      const secondCall = await client.getBrands();
+
+      // Assert
+      expect(httpClientMock.getBrands).toHaveBeenCalledTimes(2);
+      expect(firstCall).toEqual([]);
+      expect(secondCall).toEqual(brandsFixture);
     });
   });
 
@@ -250,6 +453,68 @@ describe('DGEGClient', () => {
       expect(stationTypes).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch station types (Network error)');
     });
+
+    it('should cache station types and avoid subsequent network calls', async () => {
+      // Assemble
+      const dgegStationTypes = [{ Id: 1, Descritivo: 'Autoestrada' }] as DGEGStationType[];
+      httpClientMock.getStationTypes.mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationTypes));
+
+      // Act
+      const firstCall = await client.getStationTypes();
+      const secondCall = await client.getStationTypes();
+
+      // Assert
+      expect(httpClientMock.getStationTypes).toHaveBeenCalledTimes(1);
+      expect(firstCall).toEqual(stationTypeFixtures);
+      expect(secondCall).toEqual(stationTypeFixtures);
+    });
+
+    it('should share the in-flight promise across concurrent calls', async () => {
+      // Assemble
+      const dgegStationTypes = [{ Id: 1, Descritivo: 'Autoestrada' }] as DGEGStationType[];
+      httpClientMock.getStationTypes.mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationTypes));
+
+      // Act
+      const [firstCall, secondCall] = await Promise.all([
+        client.getStationTypes(),
+        client.getStationTypes(),
+      ]);
+
+      // Assert
+      expect(httpClientMock.getStationTypes).toHaveBeenCalledTimes(1);
+      expect(firstCall).toEqual(stationTypeFixtures);
+      expect(secondCall).toEqual(stationTypeFixtures);
+    });
+
+    it('should bypass cache when forceRefresh is true', async () => {
+      // Assemble
+      const dgegStationTypes = [{ Id: 1, Descritivo: 'Autoestrada' }] as DGEGStationType[];
+      httpClientMock.getStationTypes.mockResolvedValue(createDGEGSuccessResponse(dgegStationTypes));
+
+      // Act
+      await client.getStationTypes();
+      await client.getStationTypes({ forceRefresh: true });
+
+      // Assert
+      expect(httpClientMock.getStationTypes).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not cache when the request fails, allowing subsequent retry', async () => {
+      // Assemble
+      const dgegStationTypes = [{ Id: 1, Descritivo: 'Autoestrada' }] as DGEGStationType[];
+      httpClientMock.getStationTypes
+        .mockRejectedValueOnce(createError())
+        .mockResolvedValueOnce(createDGEGSuccessResponse(dgegStationTypes));
+
+      // Act
+      const firstCall = await client.getStationTypes();
+      const secondCall = await client.getStationTypes();
+
+      // Assert
+      expect(httpClientMock.getStationTypes).toHaveBeenCalledTimes(2);
+      expect(firstCall).toEqual([]);
+      expect(secondCall).toEqual(stationTypeFixtures);
+    });
   });
 
   describe('getFuels', () => {
@@ -291,6 +556,82 @@ describe('DGEGClient', () => {
       expect(httpClientMock.getFuels).toHaveBeenCalledTimes(1);
       expect(fuels).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch fuels (Network error)');
+    });
+
+    it('should cache fuels and avoid subsequent network calls', async () => {
+      // Assemble
+      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
+      httpClientMock.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuels));
+
+      // Act
+      const firstCall = await client.getFuels();
+      const secondCall = await client.getFuels();
+
+      // Assert
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(1);
+      expect(firstCall).toEqual(fuelsFixture);
+      expect(secondCall).toEqual(fuelsFixture);
+    });
+
+    it('should share the in-flight promise across concurrent calls', async () => {
+      // Assemble
+      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
+      httpClientMock.getFuels.mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuels));
+
+      // Act
+      const [firstCall, secondCall] = await Promise.all([
+        client.getFuels(),
+        client.getFuels(),
+      ]);
+
+      // Assert
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(1);
+      expect(firstCall).toEqual(fuelsFixture);
+      expect(secondCall).toEqual(fuelsFixture);
+    });
+
+    it('should bypass cache when forceRefresh is true', async () => {
+      // Assemble
+      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
+      httpClientMock.getFuels.mockResolvedValue(createDGEGSuccessResponse(dgegFuels));
+
+      // Act
+      await client.getFuels();
+      await client.getFuels({ forceRefresh: true });
+
+      // Assert
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(2);
+    });
+
+    it('should bypass cache after calling clearCache()', async () => {
+      // Assemble
+      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
+      httpClientMock.getFuels.mockResolvedValue(createDGEGSuccessResponse(dgegFuels));
+
+      // Act
+      await client.getFuels();
+      client.clearCache();
+      await client.getFuels();
+
+      // Assert
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not cache when the request fails, allowing subsequent retry', async () => {
+      // Assemble
+      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
+      httpClientMock.getFuels
+        .mockRejectedValueOnce(createError())
+        .mockResolvedValueOnce(createDGEGSuccessResponse(dgegFuels));
+
+      // Act
+      const firstCall = await client.getFuels();
+      const secondCall = await client.getFuels();
+
+      // Assert
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(2);
+      expect(firstCall).toEqual([]);
+      expect(secondCall).toEqual(fuelsFixture);
     });
   });
 
@@ -379,6 +720,96 @@ describe('DGEGClient', () => {
       expect(httpClientMock.getStations).toHaveBeenCalledTimes(1);
       expect(stations).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch stations (Network error)');
+    });
+
+    it('should reuse cached fuels across multiple getStations calls', async () => {
+      // Assemble
+      const dgegStationFuels = [{ Id: 1, Nome: 'Estação A' }] as DGEGStationFuel[];
+      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
+
+      httpClientMock.getStations.mockResolvedValue(createDGEGSuccessResponse(dgegStationFuels));
+      httpClientMock.getFuels.mockResolvedValue(createDGEGSuccessResponse(dgegFuels));
+
+      // Act
+      await client.getStations();
+      await client.getStations();
+
+      // Assert
+      expect(httpClientMock.getStations).toHaveBeenCalledTimes(2);
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('clearCache', () => {
+    it('should clear all caches when called without arguments', async () => {
+      // Assemble
+      httpClientMock.getDistricts.mockResolvedValue(createDGEGSuccessResponse([{ Id: 1, Descritivo: 'Lisboa' }] as DGEGDistrict[]));
+      httpClientMock.getMunicipalities.mockResolvedValue(createDGEGSuccessResponse([{ Id: 1, Descritivo: 'Lisboa' }] as DGEGMunicipality[]));
+      httpClientMock.getBrands.mockResolvedValue(createDGEGSuccessResponse([{ Id: 1, Descritivo: 'Marca A' }] as DGEGBrand[]));
+      httpClientMock.getStationTypes.mockResolvedValue(createDGEGSuccessResponse([{ Id: 1, Descritivo: 'Autoestrada' }] as DGEGStationType[]));
+      httpClientMock.getFuels.mockResolvedValue(createDGEGSuccessResponse([{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[]));
+
+      await client.getDistricts();
+      await client.getMunicipalities();
+      await client.getBrands();
+      await client.getStationTypes();
+      await client.getFuels();
+
+      // Act
+      client.clearCache();
+
+      await client.getDistricts();
+      await client.getMunicipalities();
+      await client.getBrands();
+      await client.getStationTypes();
+      await client.getFuels();
+
+      // Assert
+      expect(httpClientMock.getDistricts).toHaveBeenCalledTimes(2);
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(2);
+      expect(httpClientMock.getBrands).toHaveBeenCalledTimes(2);
+      expect(httpClientMock.getStationTypes).toHaveBeenCalledTimes(2);
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(2);
+    });
+
+    it('should only clear the specified resource cache when resource name is provided', async () => {
+      // Assemble
+      httpClientMock.getDistricts.mockResolvedValue(createDGEGSuccessResponse([{ Id: 1, Descritivo: 'Lisboa' }] as DGEGDistrict[]));
+      httpClientMock.getBrands.mockResolvedValue(createDGEGSuccessResponse([{ Id: 1, Descritivo: 'Marca A' }] as DGEGBrand[]));
+      httpClientMock.getFuels.mockResolvedValue(createDGEGSuccessResponse([{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[]));
+
+      await client.getDistricts();
+      await client.getBrands();
+      await client.getFuels();
+
+      // Act
+      client.clearCache('districts');
+
+      await client.getDistricts();
+      await client.getBrands();
+      await client.getFuels();
+
+      // Assert
+      expect(httpClientMock.getDistricts).toHaveBeenCalledTimes(2);
+      expect(httpClientMock.getBrands).toHaveBeenCalledTimes(1);
+      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(1);
+    });
+
+    it('should clear all municipality filters cache when clearCache("municipalities") is called', async () => {
+      // Assemble
+      httpClientMock.getMunicipalities.mockResolvedValue(createDGEGSuccessResponse([{ Id: 1, Descritivo: 'Lisboa' }] as DGEGMunicipality[]));
+
+      await client.getMunicipalities();
+      await client.getMunicipalities({ districtId: 1 });
+
+      // Act
+      client.clearCache('municipalities');
+
+      await client.getMunicipalities();
+      await client.getMunicipalities({ districtId: 1 });
+
+      // Assert
+      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(4);
     });
   });
 });
