@@ -2,7 +2,8 @@ import {
   BRANDS_URL,
   DISTRICTS_URL,
   FUELS_URL,
-  MUNICIPALITIES_URL, STATION_TYPES_URL,
+  MUNICIPALITIES_URL,
+  STATION_TYPES_URL,
   STATIONS_URL,
 } from './http-client.constant';
 import {
@@ -13,7 +14,8 @@ import {
   DGEGMunicipalityFilters,
   DGEGResponse,
   DGEGStationFuel,
-  DGEGStationFuelFilters, DGEGStationType,
+  DGEGStationFuelFilters,
+  DGEGStationType,
 } from './http-client.type';
 
 export class DGEGHttpClient {

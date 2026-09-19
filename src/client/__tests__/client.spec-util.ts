@@ -2,15 +2,20 @@ import { Mocked } from 'vitest';
 import { DGEGHttpClient, DGEGResponse } from '../../http-client';
 import {
   mapDGEGBrandsToBrands,
-  mapDGEGDistrictsToDistricts, mapDGEGFuelsToFuels,
-  mapDGEGMunicipalitiesToMunicipalities, mapDGEGStationFuelsToStations, mapDGEGStationTypesToStationTypes,
-  mapMunicipalityFiltersToDGEGMunicipalityFilters, mapStationFiltersToDGEGStationFilters,
+  mapDGEGDistrictsToDistricts,
+  mapDGEGFuelsToFuels,
+  mapDGEGMunicipalitiesToMunicipalities,
+  mapDGEGStationFuelsToStations,
+  mapDGEGStationTypesToStationTypes,
+  mapMunicipalityFiltersToDGEGMunicipalityFilters,
+  mapStationFiltersToDGEGStationFilters,
 } from '../client.mapper';
 import {
   brandsFixture,
   districtsFixture,
   fuelsFixture,
-  municipalitiesFixture, stationsFixture,
+  municipalitiesFixture,
+  stationsFixture,
   stationTypeFixtures,
 } from './client.fixture';
 

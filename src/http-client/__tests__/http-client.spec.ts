@@ -22,7 +22,11 @@ import {
   dgegStationTypeFixtures,
   dgegStationTypeHighwayFixture,
 } from './http-client.fixture';
-import { expectFetchCallWithUrlAndHeaders, mockFetchFailure, mockFetchSuccess } from './http-client.spec-util';
+import {
+  expectFetchCallWithUrlAndHeaders,
+  mockFetchFailure,
+  mockFetchSuccess,
+} from './http-client.spec-util';
 
 describe('DGEGHttpClient', () => {
   let httpClient: DGEGHttpClient;
