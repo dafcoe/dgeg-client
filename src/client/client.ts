@@ -170,18 +170,6 @@ export class DGEGClient {
   }
 
   /**
-   * Clears in-memory cached data.
-   * Can clear all caches or a specific resource cache.
-   */
-  clearCache(resource?: CacheResource): void {
-    if (!resource || resource === 'districts') this.districtsPromise = null;
-    if (!resource || resource === 'municipalities') this.municipalitiesPromises.clear();
-    if (!resource || resource === 'brands') this.brandsPromise = null;
-    if (!resource || resource === 'stationTypes') this.stationTypesPromise = null;
-    if (!resource || resource === 'fuels') this.fuelsPromise = null;
-  }
-
-  /**
    * Fetches stations and their fuel prices using optional filters.
    */
   async getStations(filters: StationFilters = {}): Promise<Station[]> {
@@ -204,5 +192,17 @@ export class DGEGClient {
 
       return [];
     }
+  }
+
+  /**
+   * Clears in-memory cached data.
+   * Can clear all caches or a specific resource cache.
+   */
+  clearCache(resource?: CacheResource): void {
+    if (!resource || resource === 'districts') this.districtsPromise = null;
+    if (!resource || resource === 'municipalities') this.municipalitiesPromises.clear();
+    if (!resource || resource === 'brands') this.brandsPromise = null;
+    if (!resource || resource === 'stationTypes') this.stationTypesPromise = null;
+    if (!resource || resource === 'fuels') this.fuelsPromise = null;
   }
 }
