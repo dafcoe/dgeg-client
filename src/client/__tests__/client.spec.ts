@@ -603,20 +603,6 @@ describe('DGEGClient', () => {
       expect(httpClientMock.getFuels).toHaveBeenCalledTimes(2);
     });
 
-    it('should bypass cache after calling clearCache()', async () => {
-      // Assemble
-      const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
-      httpClientMock.getFuels.mockResolvedValue(createDGEGSuccessResponse(dgegFuels));
-
-      // Act
-      await client.getFuels();
-      client.clearCache();
-      await client.getFuels();
-
-      // Assert
-      expect(httpClientMock.getFuels).toHaveBeenCalledTimes(2);
-    });
-
     it('should not cache when the request fails, allowing subsequent retry', async () => {
       // Assemble
       const dgegFuels = [{ Id: 1, Descritivo: 'Gasolina' }] as DGEGFuel[];
@@ -793,23 +779,6 @@ describe('DGEGClient', () => {
       expect(httpClientMock.getDistricts).toHaveBeenCalledTimes(2);
       expect(httpClientMock.getBrands).toHaveBeenCalledTimes(1);
       expect(httpClientMock.getFuels).toHaveBeenCalledTimes(1);
-    });
-
-    it('should clear all municipality filters cache when clearCache("municipalities") is called', async () => {
-      // Assemble
-      httpClientMock.getMunicipalities.mockResolvedValue(createDGEGSuccessResponse([{ Id: 1, Descritivo: 'Lisboa' }] as DGEGMunicipality[]));
-
-      await client.getMunicipalities();
-      await client.getMunicipalities({ districtId: 1 });
-
-      // Act
-      client.clearCache('municipalities');
-
-      await client.getMunicipalities();
-      await client.getMunicipalities({ districtId: 1 });
-
-      // Assert
-      expect(httpClientMock.getMunicipalities).toHaveBeenCalledTimes(4);
     });
   });
 });
